@@ -48,3 +48,5 @@ async def test_get_meter_consumption():
     data = response.json()
     assert data["meter_id"] == meter_id
     assert isinstance(data["consumption_history"], list)
+
+

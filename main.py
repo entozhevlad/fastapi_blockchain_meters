@@ -64,3 +64,21 @@ async def get_meter_consumption(meter_id: str):
         "meter_id": meter_id,
         "consumption_history": consumption_data
     }
+
+@app.post("/modify_block/{index}/")
+async def try_modify_block(index: int, consumption: float):
+    if index < 0 or index >= len(blockchain.chain):
+        raise _fastapi.HTTPException(status_code=404, detail="Блок не найден.")
+
+    block = blockchain.chain[index]
+
+    if block.consumption == consumption:
+        return {
+            "message": f"Данные блока с индексом {index} уже содержат это потребление.",
+            "block": block.to_dict()
+        }
+    else:
+        raise _fastapi.HTTPException(
+            status_code=400,
+            detail="Нельзя изменить данные блока. Потребление должно оставаться неизменным."
+        )
