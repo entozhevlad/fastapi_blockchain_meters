@@ -1,0 +1,46 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: smart_meter
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  data_collector_service:
+    build: ./data_collector_service
+    environment:
+      DATABASE_URL: "postgresql://postgres:postgres@db:5432/smart_meter"
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+    entrypoint: ["./wait-for-it.sh", "db:5432", "--", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+  blockchain_service:
+    build: ./blockchain_service
+    environment:
+      DATABASE_URL: "postgresql://postgres:postgres@db:5432/smart_meter"
+    depends_on:
+      - db
+    ports:
+      - "8001:8001"
+    entrypoint: ["./wait-for-it.sh", "db:5432", "--", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]
+
+  database_service:
+    build: ./database_service
+    environment:
+      DATABASE_URL: "postgresql://postgres:postgres@db:5432/smart_meter"
+    depends_on:
+      - db
+    ports:
+      - "8002:8002"
+    entrypoint: ["./wait-for-it.sh", "db:5432", "--", "sh", "-c", "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8002"]
+
+volumes:
+  postgres_data:
+
